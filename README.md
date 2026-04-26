@@ -20,3 +20,5 @@ Import examples:
 from sci_viz_utils.figures import layout_fig, show_images, save_figure
 from sci_viz_utils.arrays import normalize_data
 ```
+
+See [`USAGE.md`](USAGE.md) for a fuller development and notebook guide.
