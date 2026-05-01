@@ -508,7 +508,7 @@ def show_image_grid(
     panel_rows = 2 if hist_bins else 1
     n_axes = len(arrays) * panel_rows
     if axes is None:
-        fig, axes = layout_fig(n_axes, mod=images_per_row, figsize=(None, image_height * panel_rows))
+        fig, axes = layout_fig(n_axes, mod=images_per_row, figsize=(None, image_height * (len(images)//images_per_row+1) * panel_rows))
     else:
         axes = np.atleast_1d(axes).ravel()
         fig = axes[0].figure if fig is None else fig
