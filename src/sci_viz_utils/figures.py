@@ -14,19 +14,119 @@ from matplotlib import patches, patheffects
 from .arrays import NormalizeData, percentile_limits, scale_to_0_1, sigma_limits
 
 
-def set_style(name: str = "default") -> None:
-    """Apply a compact default plotting style."""
+def set_style(
+    name: str = "default",
+    *,
+    font_size: float | None = None,
+    dpi: int | None = None,
+    save_dpi: int = 300,
+    tick_direction: str = "in",
+    ticks_on_all_sides: bool = True,
+    show_minor_ticks: bool = True,
+    grid: bool = False,
+    spine_width: float = 0.8,
+    line_width: float = 1.2,
+    marker_size: float = 4.0,
+    legend_frame: bool = False,
+    use_mathtext: bool = True,
+) -> None:
+    """Apply the shared compact Matplotlib style used by sci-viz packages.
+
+    Parameters
+    ----------
+    name:
+        Named style preset. ``"default"`` is the notebook/analysis style and
+        ``"printing"`` uses slightly smaller text with higher on-screen DPI.
+    font_size:
+        Base font size. When omitted, the selected preset chooses the size.
+    dpi, save_dpi:
+        Display and saved-figure resolution.
+    tick_direction:
+        Tick direction passed to Matplotlib. The default ``"in"`` keeps all
+        ticks inside the axes.
+    ticks_on_all_sides:
+        Show x ticks on top and y ticks on the right in addition to bottom/left.
+    show_minor_ticks:
+        Enable visible minor ticks for line/scatter plots.
+    grid:
+        Whether axes should show a light grid by default.
+    spine_width, line_width, marker_size:
+        Baseline widths/sizes for axes, plotted lines, and markers.
+    legend_frame:
+        Draw legend frames by default.
+    use_mathtext:
+        Use Matplotlib mathtext for scientific notation offsets.
+    """
+
+    presets = {
+        "default": {"figure.dpi": 120, "font.size": 10},
+        "printing": {"figure.dpi": 150, "font.size": 8},
+        "presentation": {"figure.dpi": 120, "font.size": 12},
+    }
+    if name not in presets:
+        raise ValueError(f"Unknown style {name!r}. Choose from {sorted(presets)}.")
+
+    base_font_size = float(font_size if font_size is not None else presets[name]["font.size"])
+    figure_dpi = int(dpi if dpi is not None else presets[name]["figure.dpi"])
+    label_size = base_font_size
+    tick_size = max(base_font_size - 1, 1)
+    legend_size = max(base_font_size - 1, 1)
+    title_size = base_font_size + 1
 
     settings = {
-        "figure.dpi": 120,
-        "savefig.dpi": 300,
-        "axes.spines.top": False,
-        "axes.spines.right": False,
-        "axes.grid": False,
-        "font.size": 10,
+        "figure.dpi": figure_dpi,
+        "figure.facecolor": "white",
+        "figure.edgecolor": "white",
+        "savefig.dpi": save_dpi,
+        "savefig.bbox": "tight",
+        "savefig.facecolor": "white",
+        "savefig.edgecolor": "white",
+        "savefig.transparent": False,
+        "font.family": "sans-serif",
+        "font.sans-serif": ["Arial", "DejaVu Sans", "Liberation Sans"],
+        "font.size": base_font_size,
+        "axes.titlesize": title_size,
+        "axes.labelsize": label_size,
+        "axes.linewidth": spine_width,
+        "axes.grid": grid,
+        "axes.axisbelow": True,
+        "axes.formatter.use_mathtext": use_mathtext,
+        "axes.formatter.limits": (-3, 3),
+        "axes.spines.top": True,
+        "axes.spines.right": True,
+        "xtick.direction": tick_direction,
+        "ytick.direction": tick_direction,
+        "xtick.top": ticks_on_all_sides,
+        "ytick.right": ticks_on_all_sides,
+        "xtick.labelsize": tick_size,
+        "ytick.labelsize": tick_size,
+        "xtick.major.size": 4.0,
+        "ytick.major.size": 4.0,
+        "xtick.minor.size": 2.2,
+        "ytick.minor.size": 2.2,
+        "xtick.major.width": spine_width,
+        "ytick.major.width": spine_width,
+        "xtick.minor.width": spine_width * 0.8,
+        "ytick.minor.width": spine_width * 0.8,
+        "xtick.minor.visible": show_minor_ticks,
+        "ytick.minor.visible": show_minor_ticks,
+        "grid.color": "0.85",
+        "grid.linewidth": 0.6,
+        "grid.alpha": 0.6,
+        "lines.linewidth": line_width,
+        "lines.markersize": marker_size,
+        "patch.linewidth": spine_width,
+        "legend.fontsize": legend_size,
+        "legend.frameon": legend_frame,
+        "legend.borderaxespad": 0.4,
+        "legend.handlelength": 1.6,
+        "legend.handletextpad": 0.5,
+        "image.cmap": "viridis",
+        "pdf.fonttype": 42,
+        "ps.fonttype": 42,
+        "svg.fonttype": "none",
+        "mathtext.default": "regular",
     }
-    if name == "printing":
-        settings.update({"figure.dpi": 150, "font.size": 8})
     plt.rcParams.update(settings)
 
 
@@ -352,6 +452,7 @@ def set_axis_labels(
     legend: Sequence[str] | bool | None = None,
     ticks_both_sides: bool = True,
     show_ticks: bool = True,
+    minor_ticks: bool | None = None,
     label_fontsize: float | None = None,
     title_fontsize: float | None = None,
     ticklabel_fontsize: float | None = None,
@@ -372,20 +473,33 @@ def set_axis_labels(
         ax.set_xlim(xlim)
     if ylim is not None:
         ax.set_ylim(ylim)
-    if yaxis_style == "sci":
+    if logscale:
+        ax.set_yscale("log")
+    if yaxis_style == "sci" and ax.get_yscale() != "log":
         ax.ticklabel_format(axis="y", style="sci", scilimits=(0, 0), useLocale=False)
         if scientific_notation_fontsize is not None:
             ax.yaxis.get_offset_text().set_fontsize(scientific_notation_fontsize)
-    if logscale:
-        ax.set_yscale("log")
     if legend:
         if legend is True or legend == "auto":
             ax.legend(fontsize=legend_fontsize, loc=legend_loc)
         else:
             ax.legend(legend, fontsize=legend_fontsize, loc=legend_loc)
-    length = 5 if show_ticks else 0
-    ax.tick_params(axis="x", direction="in", length=length, labelsize=ticklabel_fontsize, pad=tick_padding)
-    ax.tick_params(axis="y", direction="in", length=length, labelsize=ticklabel_fontsize, pad=tick_padding)
+    major_length = 5 if show_ticks else 0
+    x_minor_visible = bool(plt.rcParams["xtick.minor.visible"]) if minor_ticks is None else bool(minor_ticks)
+    y_minor_visible = bool(plt.rcParams["ytick.minor.visible"]) if minor_ticks is None else bool(minor_ticks)
+    x_minor_length = 2.2 if show_ticks and x_minor_visible else 0
+    y_minor_length = 2.2 if show_ticks and y_minor_visible else 0
+    x_direction = plt.rcParams.get("xtick.direction", "in")
+    y_direction = plt.rcParams.get("ytick.direction", "in")
+
+    ax.tick_params(axis="x", which="major", direction=x_direction, length=major_length, labelsize=ticklabel_fontsize, pad=tick_padding)
+    ax.tick_params(axis="y", which="major", direction=y_direction, length=major_length, labelsize=ticklabel_fontsize, pad=tick_padding)
+    ax.tick_params(axis="x", which="minor", direction=x_direction, length=x_minor_length)
+    ax.tick_params(axis="y", which="minor", direction=y_direction, length=y_minor_length)
+    if not x_minor_visible:
+        ax.xaxis.set_minor_locator(ticker.NullLocator())
+    if not y_minor_visible:
+        ax.yaxis.set_minor_locator(ticker.NullLocator())
     if ticks_both_sides:
         ax.yaxis.set_ticks_position("both")
         ax.xaxis.set_ticks_position("both")
@@ -628,7 +742,8 @@ def label_violinplot(
         x_offset = tick + offset_parms.get("x_value", 0.02)
         y_offset = value + offset_parms.get("y_value", 0.02)
         ha = "center" if text_pos == "center" else "left"
-        ax.text(tick if text_pos == "center" else x_offset, y_offset, label_text, horizontalalignment=ha, size=text_size, weight="semibold")
+        # ax.text(tick if text_pos == "center" else x_offset, y_offset, label_text, horizontalalignment=ha, size=text_size, weight="semibold")
+        ax.text(tick if text_pos == "center" else x_offset, y_offset, label_text, horizontalalignment=ha, size=text_size)
 
 
 def evaluate_image_histogram(image, outlier_std=3):
@@ -671,3 +786,5 @@ __all__ = [
     "to_scientific_10_power_format",
     "trim_axes",
 ]
+
+

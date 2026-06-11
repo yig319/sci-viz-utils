@@ -37,35 +37,31 @@ mean-centered signal is more meaningful than percentile contrast, and small
 ## Workflow: Inspect And Load HDF5 Data
 
 Main entry points: `print_h5_structure`, `get_h5_paths`, `list_h5_keys`,
-`load_h5_dataset`, `load_h5_group_dataset`, `load_h5_frames`.
-Helper: `show_h5_dataset_name` for quick legacy notebook inspection.
+`load_h5_dataset`, `load_h5_group_dataset`.
 
-Use `print_h5_structure`, `get_h5_paths`, or `list_h5_keys` first when the internal HDF5 structure is
-unknown. Use `print_tree` and `get_tree` when you already have an open HDF5 group/file. Use `load_h5_dataset(path, "group/name")` for an exact dataset path.
-Use `load_h5_group_dataset(path, group_name, dataset_name)` when a file is
-organized as named datasets inside one group. Use `load_h5_frames` when you want
-the first 3D/4D frame-like dataset or already know the dataset path.
+Use `print_h5_structure`, `get_h5_paths`, or `list_h5_keys` first when the
+internal HDF5 structure is unknown. Use `print_tree` and `get_tree` when you
+already have an open HDF5 group/file. Use `load_h5_dataset(path, "group/name")`
+for an exact dataset path. Use `load_h5_group_dataset(path, group_name,
+dataset_name)` when a file is organized as named datasets inside one group.
 
 ```python
 import h5py
-from sci_viz_utils.hdf5 import print_h5_structure, get_h5_paths, load_h5_dataset, load_h5_group_dataset, load_h5_frames
+from sci_viz_utils.hdf5 import print_h5_structure, get_h5_paths, load_h5_dataset, load_h5_group_dataset
 
 print_h5_structure("experiment.h5", max_depth=2)
 paths = get_h5_paths("experiment.h5")
 
 trace = load_h5_dataset("experiment.h5", "signals/intensity")
-stack = load_h5_frames("experiment.h5", dataset="frames")
 subset = load_h5_group_dataset("experiment.h5", "examples", "frame_stack", process_func=lambda x: x[:10])
 ```
 
-Compatibility note: `load_plumes` and `load_h5_examples` remain temporarily in
-`sci_viz_utils.hdf5` as deprecated wrappers. New plume work should use
-`plume_dynamics.io.load_plumes` or `plume_dynamics.io.load_plume_stack`.
-Generic grouped HDF5 work should use `load_h5_group_dataset`.
+For frame-like HDF5 datasets and plume-specific loaders, use the domain
+packages:
 
-`check_fragmentation(filename, group_name)` estimates storage overhead for all
-datasets under one HDF5 group. The default group name is kept for old PLD files,
-but the helper is generic.
+```python
+from plume_dynamics.io import load_h5_frames, load_plumes, check_fragmentation
+```
 
 ## Workflow: Build Figures And Image Panels
 
@@ -135,7 +131,7 @@ Functions: `finite_values(data)`, `normalize_data(data)`, `NormalizeData(data)`,
 Functions: `set_style(name='default')`, `save_figure(fig, path, **kwargs)`, `trim_axes(axs, n_axes)`, `layout_fig(graph=1, mod=None, figsize=None, subplot_style='subplots', spacing=(0.3, 0.3), parent_ax=None, layout='compressed', **kwargs)`, `make_figure_grid(n_plots, *, columns=None, figsize=None, layout='compressed')`, `create_axes_grid(n_plots, n_per_row, plot_height, n_rows=None, figsize='auto')`, `number_to_letters(number)`, `label_panel(ax, number=None, *, style='wb', loc='tl', prefix='', string_add='', size=8, text_pos='center', inset_fraction=(0.15, 0.15), **kwargs)`, `labelfigs(ax, number=None, **kwargs)`, `scalebar(ax, image_size, scale_size, units='', loc='br', pixel_size=None, color='white', linewidth=0, text_color=None, text_offset=0.35, text_position='above', **kwargs)`, `add_scalebar(ax, image_size, scale_size, *, units='nm', loc='br', color='white', linewidth=2.0, **kwargs)`, `set_axis_labels(ax, *, xlabel=None, ylabel=None, title=None, xlim=None, ylim=None, yaxis_style='sci', logscale=False, legend=None, ticks_both_sides=True, show_ticks=True, label_fontsize=None, title_fontsize=None, ticklabel_fontsize=None, scientific_notation_fontsize=None, tick_padding=10, legend_fontsize=8, legend_loc='best')`, `set_labels(ax, xlabel=None, ylabel=None, title=None, xlim=None, ylim=None, **kwargs)`, `set_cbar(fig, ax, cbar_label=None, scientific_notation=True, logscale=False, tick_in=True, ticklabel_fontsize=10, labelpad=4, fontsize=10)`, `imshow_percentile(ax, image, percentiles=(1, 99), cmap='viridis', colorbar=True, **kwargs)`, `plot_image_map(ax, data, *, colorbar=True, clim=None, cbar_number_format='%.1e', cmap='viridis')`, `show_image_grid(images, *, labels=None, images_per_row=8, image_height=1.0, show_colorbar=False, clim_sigma=3.0, clim=None, cmap='viridis', scale_0_1=False, scale_range=False, hist_bins=None, show_axis=False, title=None, fig=None, axes=None)`, `show_images(images, labels=None, img_per_row=8, img_height=1, label_size=12, title=None, show_colorbar=False, clim='auto', cmap='viridis', scale_range=False, hist_bins=None, show_axis=False, fig=None, axes=None, save_path=None)`, `to_scientific_10_power_format(value)`, `label_violinplot(ax, data, label_type='average', text_pos='center', value_format='float', text_size=14, offset_parms=None)`, `evaluate_image_histogram(image, outlier_std=3)`
 
 ### `sci_viz_utils.hdf5`
-Functions: `print_tree(parent, indent=0)`, `get_tree(parent)`, `print_h5_structure(path, max_depth=None, show_attrs=True, show_sample=False, sample_items=5)`, `get_h5_paths(path)`, `list_h5_keys(path, group=None)`, `show_h5_dataset_name(ds_path, class_name=None)`, `load_h5_dataset(path, dataset)`, `load_h5_group_dataset(path, group_name, dataset_name, process_func=None)`, `load_h5_frames(path, dataset=None)`, `load_plumes(ds_path, class_name, ds_name, process_func=None)`, `load_h5_examples(ds_path, class_name, ds_name, process_func=None, show=True)`, `check_fragmentation(filename, group_name='PLD_Plumes')`
+Functions: `print_tree(parent, indent=0)`, `get_tree(parent)`, `print_h5_structure(path, max_depth=None, show_attrs=True, show_sample=False, sample_items=5)`, `get_h5_paths(path)`, `list_h5_keys(path, group=None)`, `load_h5_dataset(path, dataset)`, `load_h5_group_dataset(path, group_name, dataset_name, process_func=None)`
 
 ### `sci_viz_utils.paths`
 Functions: `find_repo_root(start=None)`, `ensure_dir(path)`, `list_files(root, patterns, recursive=True)`

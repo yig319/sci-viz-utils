@@ -114,12 +114,6 @@ def list_h5_keys(path: str | Path, group: str | None = None) -> list[str]:
         return list(target.keys())
 
 
-def show_h5_dataset_name(ds_path, class_name=None):
-    """Print top-level keys or keys under ``class_name`` in one HDF5 file."""
-
-    print(list_h5_keys(ds_path, group=class_name))
-
-
 def load_h5_dataset(path: str | Path, dataset: str) -> np.ndarray:
     """Load one HDF5 dataset into a NumPy array."""
 
@@ -146,8 +140,13 @@ def load_h5_group_dataset(
     return process_func(data) if process_func else data
 
 
-def load_h5_frames(path: str | Path, dataset: str | None = None) -> np.ndarray:
-    """Load the first 3D/4D frame-like HDF5 dataset, or a named dataset."""
+# ---------------------------------------------------------------------------
+# Deprecated / relocated helpers — kept as shims for one release cycle
+# ---------------------------------------------------------------------------
+
+
+def _load_h5_frames_impl(path: str | Path, dataset: str | None = None) -> np.ndarray:
+    """Internal implementation retained for the ``load_h5_frames`` deprecation shim."""
 
     h5py = _h5py()
     path = Path(path)
@@ -169,39 +168,20 @@ def load_h5_frames(path: str | Path, dataset: str | None = None) -> np.ndarray:
     return frames
 
 
-def load_plumes(ds_path, class_name, ds_name, process_func=None):
-    """Deprecated compatibility wrapper for older plume notebooks."""
+def load_h5_frames(path: str | Path, dataset: str | None = None) -> np.ndarray:
+    """Deprecated — use :func:`plume_dynamics.io.load_h5_frames` instead."""
 
     warnings.warn(
-        "sci_viz_utils.hdf5.load_plumes is deprecated; use "
-        "plume_dynamics.io.load_plumes for plume data or "
-        "sci_viz_utils.hdf5.load_h5_group_dataset for generic grouped datasets.",
+        "sci_viz_utils.hdf5.load_h5_frames is deprecated; use "
+        "plume_dynamics.io.load_h5_frames for frame-like HDF5 datasets.",
         DeprecationWarning,
         stacklevel=2,
     )
-    return load_h5_group_dataset(ds_path, class_name, ds_name, process_func=process_func)
+    return _load_h5_frames_impl(path, dataset)
 
 
-def load_h5_examples(ds_path, class_name, ds_name, process_func=None, show=True):
-    """Deprecated compatibility wrapper for older example notebooks."""
-
-    warnings.warn(
-        "sci_viz_utils.hdf5.load_h5_examples is deprecated; use "
-        "load_h5_group_dataset for generic grouped HDF5 datasets or a "
-        "domain package loader for domain-specific data.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return load_h5_group_dataset(ds_path, class_name, ds_name, process_func=process_func)
-
-
-def check_fragmentation(filename, group_name="PLD_Plumes"):
-    """Estimate HDF5 storage overhead for datasets under one group.
-
-    The return value is the percent difference between logical dataset size and
-    allocated on-disk size. The default group keeps compatibility with older PLD
-    notebooks, but the helper itself is generic.
-    """
+def _check_fragmentation_impl(filename, group_name="PLD_Plumes"):
+    """Internal implementation retained for the ``check_fragmentation`` deprecation shim."""
 
     h5py = _h5py()
     with h5py.File(filename, "r") as handle:
@@ -216,17 +196,24 @@ def check_fragmentation(filename, group_name="PLD_Plumes"):
     return (allocated_size - total_size) / allocated_size * 100
 
 
+def check_fragmentation(filename, group_name="PLD_Plumes"):
+    """Deprecated — use :func:`plume_dynamics.io.check_fragmentation` instead."""
+
+    warnings.warn(
+        "sci_viz_utils.hdf5.check_fragmentation is deprecated; use "
+        "plume_dynamics.io.check_fragmentation for HDF5 storage analysis.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return _check_fragmentation_impl(filename, group_name)
+
+
 __all__ = [
-    "check_fragmentation",
     "get_h5_paths",
     "get_tree",
     "list_h5_keys",
     "load_h5_dataset",
-    "load_h5_examples",
-    "load_h5_frames",
     "load_h5_group_dataset",
-    "load_plumes",
     "print_h5_structure",
     "print_tree",
-    "show_h5_dataset_name",
 ]
